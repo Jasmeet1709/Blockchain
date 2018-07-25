@@ -94,6 +94,9 @@ class Blockchain:
 # creating an app
 app = Flask(__name__)
 
+# creating an address for the node at port 5000
+node_address = str(uuid4()).replace('-')
+
 # creating a blockchain
 blockchain = Blockchain()
 
@@ -104,13 +107,15 @@ def mine_block():
     previous_proof = previous_block['proof']
     proof = blockchain.proof_of_work(previous_proof)
     previous_hash = blockchain.hash(previous_block)
+    blockchain.add_transactions(sender = node_address, receiver = 'jasmeet', amount = 1)
     block = blockchain.createBlock(proof,previous_hash)
     response = {
         'message' : 'Congrats, you just mined the block',
         'index' : block['index'],
         'timestamp' : block['timestamp'],
         'proof' : block['proof'],
-        'previous_hash' : block['previous_hash']
+        'previous_hash' : block['previous_hash'],
+        'transactions' : block['transactions']
     }
     return jsonify(response), 200
 
@@ -134,6 +139,18 @@ def is_chain_valid():
         'message' :  message
     }
     return jsonify(response), 200
+
+# adding a transaction
+@app.route('/add_transaction', methods = ['POST'])
+def add_transaction():
+    json = request.get_json()
+    transaction_keys = ['sender', 'receiver', 'amount']
+    if not all (key in for key in transaction_keys):
+        return 'Some elemments of a transaction are missing', 400
+    index = blockchain.add_transactions(json['sender'], json['receiver'], json['amount'])
+    response = { 'message': f'This transaction will be added to block {index}'}
+    return jsonify(response), 201
+
 # making blockchain decentralised
 
 # running a app
