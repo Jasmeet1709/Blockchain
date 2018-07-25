@@ -95,7 +95,7 @@ class Blockchain:
 app = Flask(__name__)
 
 # creating an address for the node at port 5000
-node_address = str(uuid4()).replace('-')
+node_address = str(uuid4()).replace('-','')
 
 # creating a blockchain
 blockchain = Blockchain()
@@ -145,7 +145,7 @@ def is_chain_valid():
 def add_transaction():
     json = request.get_json()
     transaction_keys = ['sender', 'receiver', 'amount']
-    if not all (key in for key in transaction_keys):
+    if not all (key in json for key in transaction_keys):
         return 'Some elemments of a transaction are missing', 400
     index = blockchain.add_transactions(json['sender'], json['receiver'], json['amount'])
     response = { 'message': f'This transaction will be added to block {index}'}
@@ -160,6 +160,8 @@ def connect_node():
     nodes = json.get('nodes')
     if nodes is None:
         return "No node", 400
+    for node in nodes:
+        blockchain.add_node(node)
     response = {
         'message' : 'All the nodes are now connected. The Jascoin blockchain now contians the following nodes :',
         'total_nodes' : list(blockchain.nodes)
@@ -181,6 +183,6 @@ def replace_chain():
             'actual_chain': blockchain.chain
         }
     return jsonify(response), 200
-    
+
 # running a app
 app.run(host = '0.0.0.0', port = 5000)
